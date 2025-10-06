@@ -4,7 +4,11 @@
 
 ## Установка
 
-Используйте `Python 3.11+`:
+Используйте `Python 3.11`:
+
+```shell
+python.exe -m pip install --upgrade pip
+```
 
 **ВАЖНО**: Сначала установите torch для вашей версии CUDA:
 ```sh
