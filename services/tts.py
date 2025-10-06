@@ -1,8 +1,23 @@
 import os
+import sys
+from io import StringIO
 
 from TTS.api import TTS  # noqa
 
 os.makedirs("../output", exist_ok=True)
+
+# Автоматически соглашаемся с лицензией XTTS v2
+def auto_accept_license():
+    """Автоматически принимает лицензионные условия для XTTS v2"""
+    # Устанавливаем переменную окружения для автоматического принятия лицензии
+    os.environ['COQUI_TOS_AGREED'] = '1'
+    original_stdin = sys.stdin
+    sys.stdin = StringIO('y\n')
+    return original_stdin
+
+def restore_stdin(original_stdin):
+    """Восстанавливает оригинальный stdin"""
+    sys.stdin = original_stdin
 
 
 def generate_audio(
@@ -11,7 +26,8 @@ def generate_audio(
         output_path: str,
         gpu: bool = True,
         speaker_wav: str = None,
-        language: str = None
+        language: str = None,
+        speaker: str = None
 ):
     """
     Generate audio from text using Coqui TTS.
@@ -21,9 +37,33 @@ def generate_audio(
     @param gpu: Whether to use GPU.
     @param speaker_wav: Path to speaker audio file for voice cloning.
     @param language: Language code for multilingual models.
+    @param speaker: Speaker name for multi-speaker models.
     @return: None
     """
-    tts = TTS(model_name, gpu=gpu)
+    # Автоматически принимаем лицензию для XTTS v2
+    original_stdin = None
+    if 'xtts' in model_name.lower():
+        original_stdin = auto_accept_license()
+    
+    try:
+        tts = TTS(model_name)
+        # Используем новый API вместо устаревшего параметра gpu
+        if gpu:
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    tts.to('cuda')
+                    print('🚀 Using GPU acceleration')
+                else:
+                    print('⚠️ GPU not available, using CPU')
+            except ImportError:
+                print('⚠️ PyTorch not available, using CPU')
+        else:
+            tts.to('cpu')
+            print('💻 Using CPU')
+    finally:
+        if original_stdin:
+            restore_stdin(original_stdin)
 
     # Подготавливаем параметры для генерации
     tts_params = {
@@ -41,9 +81,12 @@ def generate_audio(
         tts_params['language'] = language
         print(f'🌍 Using language: {language}')
 
-    # Для многоязычных моделей без speaker_wav используем default speaker
-    if not speaker_wav and 'multilingual' in model_name:
-        # Определяем доступных спикеров для модели
+    # Добавляем speaker если предоставлен (для моделей с множественными спикерами)
+    if speaker:
+        tts_params['speaker'] = speaker
+        print(f'🎤 Using speaker: {speaker}')
+    elif not speaker_wav and 'multilingual' in model_name:
+        # Для многоязычных моделей без speaker_wav используем default speaker
         try:
             speakers = tts.speakers
             if speakers and len(speakers) > 0:

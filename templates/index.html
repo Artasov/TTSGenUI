@@ -115,6 +115,34 @@
                                 <option value="zh">🇨🇳 ZH</option>
                                 <option value="ja">🇯🇵 JA</option>
                                 <option value="ko">🇰🇷 KO</option>
+                                <option value="uk">🇺🇦 UK</option>
+                                <option value="be">🇧🇾 BE</option>
+                                <option value="bg">🇧🇬 BG</option>
+                                <option value="cs">🇨🇿 CS</option>
+                                <option value="da">🇩🇰 DA</option>
+                                <option value="et">🇪🇪 ET</option>
+                                <option value="ga">🇮🇪 GA</option>
+                                <option value="hu">🇭🇺 HU</option>
+                                <option value="el">🇬🇷 EL</option>
+                                <option value="fi">🇫🇮 FI</option>
+                                <option value="hr">🇭🇷 HR</option>
+                                <option value="lt">🇱🇹 LT</option>
+                                <option value="lv">🇱🇻 LV</option>
+                                <option value="mt">🇲🇹 MT</option>
+                                <option value="pt">🇵🇹 PT</option>
+                                <option value="ro">🇷🇴 RO</option>
+                                <option value="sk">🇸🇰 SK</option>
+                                <option value="sl">🇸🇮 SL</option>
+                                <option value="sv">🇸🇪 SV</option>
+                                <option value="ca">🇪🇸 CA</option>
+                                <option value="fa">🇮🇷 FA</option>
+                                <option value="bn">🇧🇩 BN</option>
+                                <option value="ewe">🇬🇭 EWE</option>
+                                <option value="hau">🇳🇬 HAU</option>
+                                <option value="lin">🇨🇩 LIN</option>
+                                <option value="tw_akuapem">🇬🇭 TW-A</option>
+                                <option value="tw_asante">🇬🇭 TW-S</option>
+                                <option value="yor">🇳🇬 YOR</option>
                                 <option value="multilingual">🌍 Multi</option>
                             </select>
                             <select id="genderFilter" class="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-600 text-gray-900 dark:text-white">
@@ -272,6 +300,32 @@
                     </div>
                 </div>
 
+                    </div>
+                </div>
+
+                <!-- Speaker Selection Section -->
+                <div id="speakerSelectionSection" class="hidden">
+                    <div class="border-t border-gray-200 dark:border-dark-600 pt-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                            🎤 Выбор спикера
+                        </h3>
+                        
+                        <!-- Speaker Selection -->
+                        <div class="mb-4">
+                            <label for="speaker" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Спикер
+                            </label>
+                            <select 
+                                id="speaker" 
+                                name="speaker" 
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-700 text-gray-900 dark:text-white"
+                            >
+                                <option value="">Загрузка спикеров...</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Выберите голос для генерации речи
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -647,6 +701,42 @@
             });
         }
         
+        // Загрузка спикеров для модели
+        async function loadSpeakers(modelId) {
+            const speakerSelect = document.getElementById('speaker');
+            const speakerSection = document.getElementById('speakerSelectionSection');
+            
+            try {
+                speakerSelect.innerHTML = '<option value="">Загрузка спикеров...</option>';
+                speakerSelect.disabled = true;
+                
+                const response = await fetch(`/speakers/${encodeURIComponent(modelId)}`);
+                const data = await response.json();
+                
+                speakerSelect.innerHTML = '';
+                
+                if (data.has_speakers && data.speakers.length > 0) {
+                    speakerSelect.innerHTML = '<option value="">Выберите спикера</option>';
+                    data.speakers.forEach(speaker => {
+                        const option = document.createElement('option');
+                        option.value = speaker;
+                        option.textContent = speaker;
+                        speakerSelect.appendChild(option);
+                    });
+                    speakerSection.classList.remove('hidden');
+                } else {
+                    speakerSection.classList.add('hidden');
+                }
+                
+                speakerSelect.disabled = false;
+            } catch (error) {
+                console.error('Ошибка загрузки спикеров:', error);
+                speakerSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+                speakerSelect.disabled = false;
+                speakerSection.classList.add('hidden');
+            }
+        }
+
         // Обновление выбранной модели
         function updateSelectedModel() {
             const selectedRadio = document.querySelector('input[name="model_name"]:checked');
@@ -656,6 +746,7 @@
             const previewSelectedBtn = document.getElementById('previewSelectedBtn');
             const hideSelectedBtn = document.getElementById('hideSelectedBtn');
             const voiceCloningSection = document.getElementById('voiceCloningSection');
+            const speakerSelectionSection = document.getElementById('speakerSelectionSection');
             
             if (selectedRadio) {
                 const modelData = JSON.parse(selectedRadio.closest('label').dataset.model);
@@ -676,6 +767,13 @@
                 } else {
                     voiceCloningSection.classList.add('hidden');
                 }
+                
+                // Загружаем спикеров для моделей с поддержкой спикеров
+                if (modelData.speakers) {
+                    loadSpeakers(modelData.id);
+                } else {
+                    speakerSelectionSection.classList.add('hidden');
+                }
             } else {
                 selectedModelName.textContent = 'Выберите модель';
                 selectedModelDescription.textContent = 'Модель не выбрана';
@@ -684,6 +782,7 @@
                 previewSelectedBtn.classList.add('opacity-0');
                 hideSelectedBtn.classList.add('opacity-0');
                 voiceCloningSection.classList.add('hidden');
+                speakerSelectionSection.classList.add('hidden');
             }
         }
         
