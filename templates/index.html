@@ -406,8 +406,8 @@
                                         <li>• Bark Multilingual</li>
                                     </ul>
                                     <p class="mt-2 text-xs text-blue-600 dark:text-blue-400">
-                                        <strong>Важно:</strong> Для XTTS v2 образец голоса не обязателен - модель может работать с встроенными спикерами. 
-                                        Загрузите образец только если хотите клонировать конкретный голос.
+                                        <strong>Важно:</strong> Для XTTS v2 <strong>рекомендуется</strong> загрузить образец голоса для лучшего качества. 
+                                        Если встроенные спикеры недоступны, образец голоса станет обязательным.
                                         <br><strong>Язык обязателен</strong> для всех многоязычных моделей.
                                     </p>
                                 </div>
@@ -726,12 +726,27 @@
                     data.speakers.forEach(speaker => {
                         const option = document.createElement('option');
                         option.value = speaker;
-                        option.textContent = speaker;
+                        // Добавляем эмодзи для пола
+                        const displayName = speaker === 'female' ? '👩 Женский' : 
+                                          speaker === 'male' ? '👨 Мужской' : speaker;
+                        option.textContent = displayName;
                         speakerSelect.appendChild(option);
                     });
                     speakerSection.classList.remove('hidden');
                 } else {
-                    speakerSection.classList.add('hidden');
+                    // Для XTTS v2 показываем предупреждение
+                    if (modelId.includes('xtts')) {
+                        speakerSelect.innerHTML = '<option value="">⚠️ Встроенные спикеры недоступны</option>';
+                        speakerSection.classList.remove('hidden');
+                        
+                        // Добавляем предупреждение
+                        const warning = document.createElement('div');
+                        warning.className = 'mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded text-xs text-yellow-800 dark:text-yellow-200';
+                        warning.innerHTML = '⚠️ Для XTTS v2 необходимо загрузить образец голоса';
+                        speakerSection.appendChild(warning);
+                    } else {
+                        speakerSection.classList.add('hidden');
+                    }
                 }
                 
                 speakerSelect.disabled = false;
@@ -775,7 +790,7 @@
                 }
                 
                 // Загружаем спикеров для моделей с поддержкой спикеров
-                if (modelData.speakers || modelData.id.includes('xtts')) {
+                if (modelData.speakers || modelData.id.includes('xtts') || modelData.id.includes('multilingual')) {
                     loadSpeakers(modelData.id);
                 } else {
                     speakerSelectionSection.classList.add('hidden');
@@ -857,6 +872,19 @@
                     const language = document.getElementById('language').value;
                     if (!language) {
                         errorText.textContent = 'Для многоязычных моделей необходимо выбрать язык';
+                        errorMessage.classList.remove('hidden');
+                        successMessage.classList.add('hidden');
+                        return;
+                    }
+                }
+                
+                // Для XTTS v2 проверяем наличие образца голоса или спикера
+                if (modelData.id.includes('xtts')) {
+                    const speakerFile = document.getElementById('speaker_file').files[0];
+                    const selectedSpeaker = document.getElementById('speaker').value;
+                    
+                    if (!speakerFile && !selectedSpeaker) {
+                        errorText.textContent = 'Для XTTS v2 необходимо либо загрузить образец голоса, либо выбрать встроенного спикера';
                         errorMessage.classList.remove('hidden');
                         successMessage.classList.add('hidden');
                         return;

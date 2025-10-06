@@ -126,21 +126,30 @@ def generate_audio(
     if 'xtts' in model_name.lower():
         # XTTS v2 требует либо speaker_wav, либо speaker из доступных спикеров
         if not speaker_wav:
-            # Если нет образца голоса, используем встроенные спикеры
+            # Пытаемся получить реальных спикеров
             try:
                 speakers = tts.speakers
                 if speakers and len(speakers) > 0:
-                    # Берем первого доступного спикера
-                    first_speaker = list(speakers.keys())[0] if isinstance(speakers, dict) else speakers[0]
-                    tts_params['speaker'] = first_speaker
-                    print(f"🎯 Using XTTS speaker: {first_speaker}")
+                    print(f"📋 Available speakers: {speakers}")
+                    # Если пользователь выбрал спикера, проверяем его наличие
+                    if speaker and speaker in speakers:
+                        tts_params['speaker'] = speaker
+                        print(f"🎯 Using selected XTTS speaker: {speaker}")
+                    else:
+                        # Используем первого доступного спикера
+                        first_speaker = list(speakers.keys())[0] if isinstance(speakers, dict) else speakers[0]
+                        tts_params['speaker'] = first_speaker
+                        print(f"🎯 Using first available XTTS speaker: {first_speaker}")
                 else:
-                    # Если нет встроенных спикеров, не добавляем speaker параметр
-                    print(f"🎯 No built-in speakers found, using speaker_wav or language only")
+                    # Если нет встроенных спикеров, XTTS v2 требует speaker_wav
+                    print(f"🎯 No built-in speakers found for XTTS, speaker_wav required")
+                    if not speaker_wav:
+                        raise ValueError("XTTS v2 не имеет встроенных спикеров. Пожалуйста, загрузите образец голоса (3-10 секунд аудио) или выберите другую модель.")
             except Exception as e:
-                # Если ошибка получения спикеров, не добавляем speaker параметр
-                print(f"🎯 Could not get speakers: {e}, using language only")
-                pass
+                # Если ошибка получения спикеров, XTTS v2 требует speaker_wav
+                print(f"🎯 Could not get XTTS speakers: {e}, speaker_wav required")
+                if not speaker_wav:
+                    raise ValueError("XTTS v2 не может получить список спикеров. Пожалуйста, загрузите образец голоса (3-10 секунд аудио) или выберите другую модель.")
     else:
         # Добавляем speaker если предоставлен (для моделей с множественными спикерами)
         if speaker:
@@ -151,22 +160,29 @@ def generate_audio(
             try:
                 speakers = tts.speakers
                 if speakers and len(speakers) > 0:
-                    tts_params['speaker'] = speakers[0]  # Используем первого доступного спикера
-                    print(f"🎯 Using default speaker: {speakers[0]}")
+                    first_speaker = list(speakers.keys())[0] if isinstance(speakers, dict) else speakers[0]
+                    tts_params['speaker'] = first_speaker
+                    print(f"🎯 Using multilingual speaker: {first_speaker}")
                 else:
                     # Если нет встроенных спикеров, используем дефолтный
-                    tts_params['speaker'] = 'default'
+                    tts_params['speaker'] = 'female'
                     print(f"🎯 Using default speaker for multilingual model")
             except:  # noqa
                 # В крайнем случае используем дефолтный спикер
-                tts_params['speaker'] = 'default'
+                tts_params['speaker'] = 'female'
                 print(f"🎯 Using fallback default speaker for multilingual model")
 
     try:
         print(f"🎵 Generating audio with parameters: {tts_params}")
+        print(f"📋 Model: {model_name}")
+        print(f"📋 Has speaker_wav: {bool(speaker_wav)}")
+        print(f"📋 Has speaker: {bool(speaker)}")
+        print(f"📋 Has language: {bool(language)}")
+        
         tts.tts_to_file(**tts_params)
         print(f"✅ Audio saved: {output_path}")
     except Exception as e:
         print(f"❌ Error generating audio: {e}")
         print(f"📋 Parameters used: {tts_params}")
+        print(f"📋 Model name: {model_name}")
         raise

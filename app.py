@@ -68,7 +68,8 @@ AVAILABLE_MODELS = {
             'gender': 'mixed',
             'quality': 'high',
             'voice_cloning': True,
-            'speakers': True
+            'speakers': True,
+            'default_speakers': ['female', 'male']
         },
         {
             'id': 'tts_models/multilingual/multi-dataset/xtts_v1.1',
@@ -78,7 +79,8 @@ AVAILABLE_MODELS = {
             'gender': 'mixed',
             'quality': 'high',
             'voice_cloning': True,
-            'speakers': True
+            'speakers': True,
+            'default_speakers': ['female', 'male']
         },
         {
             'id': 'tts_models/multilingual/multi-dataset/your_tts',
@@ -968,7 +970,7 @@ async def get_speakers(model_name: str):
                     else:
                         speakers = list(tts.speakers)
                 elif 'xtts' in model_name.lower():
-                    # Для XTTS v2 пробуем получить реальных спикеров
+                    # Для XTTS v2 пытаемся получить реальных спикеров
                     try:
                         if hasattr(tts, 'speaker_manager') and hasattr(tts.speaker_manager, 'speakers'):
                             speakers = list(tts.speaker_manager.speakers.keys())
