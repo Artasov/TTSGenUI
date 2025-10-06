@@ -5,15 +5,28 @@
 ## Установка
 
 Используйте `Python 3.11+`:
+
+**ВАЖНО**: Сначала установите torch для вашей версии CUDA:
 ```sh
-pip install -r requirements.txt
+# Для CUDA 12.1
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Для CUDA 11.8
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# Для CPU (без CUDA)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
-Для CUDA установите:
+Затем установите остальные зависимости:
 ```sh
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements.txt
 pip install git+https://github.com/coqui-ai/TTS.git@dev
 ```
+
+**Проверенные конфигурации:**
+- Nvidia 4070 Super + CUDA 12.9
+- Windows 10/11 + Python 3.11
 
 ## Запуск
 
