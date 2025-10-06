@@ -15,19 +15,143 @@ app = FastAPI(title='TTS Generator')
 # Настройка шаблонов
 templates = Jinja2Templates(directory='templates')
 
+# Настройка статических файлов
+app.mount("/output", StaticFiles(directory="output"), name="output")
+
 # Создаем папку output если её нет
 os.makedirs('output', exist_ok=True)
 
-# Доступные модели TTS
-AVAILABLE_MODELS = [
-    'tts_models/en/ljspeech/tacotron2-DDC',
-    'tts_models/en/ljspeech/fast_pitch',
-    'tts_models/en/vctk/vits',
-    'tts_models/en/ek1/tacotron2',
-    'tts_models/multilingual/multi-dataset/your_tts',
-    'tts_models/ru/ruslan/tacotron2-DDC',
-    'tts_models/ru/ruslan/fast_pitch',
-]
+# Доступные модели TTS с подробными описаниями
+AVAILABLE_MODELS = {
+    'Английские модели': [
+        {
+            'id': 'tts_models/en/ljspeech/tacotron2-DDC',
+            'name': 'LJSpeech Tacotron2-DDC',
+            'description': 'Высококачественная английская женская речь, четкое произношение',
+            'language': 'en',
+            'gender': 'female',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/en/ljspeech/fast_pitch',
+            'name': 'LJSpeech FastPitch',
+            'description': 'Быстрая генерация английской женской речи',
+            'language': 'en',
+            'gender': 'female',
+            'quality': 'medium'
+        },
+        {
+            'id': 'tts_models/en/vctk/vits',
+            'name': 'VCTK VITS',
+            'description': 'Многоязычная модель с различными акцентами английского',
+            'language': 'en',
+            'gender': 'mixed',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/en/ek1/tacotron2',
+            'name': 'EK1 Tacotron2',
+            'description': 'Английская мужская речь, естественное звучание',
+            'language': 'en',
+            'gender': 'male',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/en/blizzard2013/capacitron-t2-c50',
+            'name': 'Blizzard2013 Capacitron',
+            'description': 'Профессиональная английская речь для аудиокниг',
+            'language': 'en',
+            'gender': 'female',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/en/sam/tacotron-DDC',
+            'name': 'SAM Tacotron-DDC',
+            'description': 'Английская мужская речь, подходит для новостей',
+            'language': 'en',
+            'gender': 'male',
+            'quality': 'medium'
+        }
+    ],
+    'Русские модели': [
+        {
+            'id': 'tts_models/ru/ruslan/tacotron2-DDC',
+            'name': 'Руслан Tacotron2-DDC',
+            'description': 'Высококачественная русская мужская речь',
+            'language': 'ru',
+            'gender': 'male',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/ru/ruslan/fast_pitch',
+            'name': 'Руслан FastPitch',
+            'description': 'Быстрая генерация русской мужской речи',
+            'language': 'ru',
+            'gender': 'male',
+            'quality': 'medium'
+        },
+        {
+            'id': 'tts_models/ru/mai_female/glow-tts',
+            'name': 'MAI Female Glow-TTS',
+            'description': 'Русская женская речь, естественное звучание',
+            'language': 'ru',
+            'gender': 'female',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/ru/mai_male/glow-tts',
+            'name': 'MAI Male Glow-TTS',
+            'description': 'Русская мужская речь, четкое произношение',
+            'language': 'ru',
+            'gender': 'male',
+            'quality': 'high'
+        }
+    ],
+    'Многоязычные модели': [
+        {
+            'id': 'tts_models/multilingual/multi-dataset/your_tts',
+            'name': 'YourTTS Multilingual',
+            'description': 'Многоязычная модель, поддерживает множество языков',
+            'language': 'multilingual',
+            'gender': 'mixed',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/multilingual/multi-dataset/bark',
+            'name': 'Bark Multilingual',
+            'description': 'Современная многоязычная модель с эмоциями',
+            'language': 'multilingual',
+            'gender': 'mixed',
+            'quality': 'high'
+        }
+    ],
+    'Специализированные модели': [
+        {
+            'id': 'tts_models/en/ljspeech/speedy_speech',
+            'name': 'LJSpeech Speedy Speech',
+            'description': 'Очень быстрая генерация английской речи',
+            'language': 'en',
+            'gender': 'female',
+            'quality': 'medium'
+        },
+        {
+            'id': 'tts_models/en/ljspeech/glow-tts',
+            'name': 'LJSpeech Glow-TTS',
+            'description': 'Высококачественная английская речь с контролем темпа',
+            'language': 'en',
+            'gender': 'female',
+            'quality': 'high'
+        },
+        {
+            'id': 'tts_models/en/ljspeech/tacotron2-DCA',
+            'name': 'LJSpeech Tacotron2-DCA',
+            'description': 'Английская речь с улучшенным вниманием',
+            'language': 'en',
+            'gender': 'female',
+            'quality': 'high'
+        }
+    ]
+}
 
 def get_unique_filename(output_dir: str, filename: str) -> str:
     """Генерирует уникальное имя файла если файл уже существует"""
@@ -66,7 +190,17 @@ async def generate_tts(
         if not output_filename.strip():
             raise HTTPException(status_code=400, detail='Имя файла не может быть пустым')
         
-        if model_name not in AVAILABLE_MODELS:
+        # Проверяем, что модель существует в любой из категорий
+        model_exists = False
+        for category_models in AVAILABLE_MODELS.values():
+            for model in category_models:
+                if model['id'] == model_name:
+                    model_exists = True
+                    break
+            if model_exists:
+                break
+        
+        if not model_exists:
             raise HTTPException(status_code=400, detail='Неверная модель')
         
         # Добавляем расширение .wav если его нет
