@@ -11,6 +11,30 @@ os.environ['TTS_HOME'] = str(MODELS_DIR)
 # Автоматически соглашаемся с лицензией Coqui TTS
 os.environ['COQUI_TOS_AGREED'] = '1'
 
+# Проверяем совместимость зависимостей
+def check_dependencies():
+    """Проверяет совместимость зависимостей"""
+    try:
+        import transformers
+        from transformers import __version__ as transformers_version
+        
+        version_parts = transformers_version.split('.')
+        major, minor = int(version_parts[0]), int(version_parts[1])
+        
+        if major > 4 or (major == 4 and minor >= 40):
+            print("⚠️ ВНИМАНИЕ: Обнаружена несовместимая версия transformers")
+            print(f"📋 Текущая версия: {transformers_version}")
+            print("💡 Рекомендуется: transformers==4.35.2")
+            print("🔧 Запустите: python fix_dependencies.py")
+            
+    except ImportError:
+        print("⚠️ Transformers не установлен")
+    except Exception as e:
+        print(f"⚠️ Ошибка проверки зависимостей: {e}")
+
+# Проверяем зависимости при запуске
+check_dependencies()
+
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles

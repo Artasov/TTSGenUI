@@ -2,6 +2,36 @@ import os
 import sys
 from io import StringIO
 
+# Исправляем проблему с BeamSearchScorer в новых версиях transformers
+def fix_transformers_compatibility():
+    """Исправляет совместимость с новыми версиями transformers"""
+    try:
+        import transformers
+        from transformers import __version__ as transformers_version
+        
+        # Проверяем версию transformers
+        version_parts = transformers_version.split('.')
+        major, minor = int(version_parts[0]), int(version_parts[1])
+        
+        # Если версия >= 4.40, добавляем заглушку для BeamSearchScorer
+        if major > 4 or (major == 4 and minor >= 40):
+            print("🔧 Исправление совместимости с transformers >= 4.40")
+            
+            # Добавляем заглушку для BeamSearchScorer
+            import transformers.generation
+            if not hasattr(transformers.generation, 'BeamSearchScorer'):
+                class BeamSearchScorer:
+                    def __init__(self, *args, **kwargs):
+                        pass
+                transformers.generation.BeamSearchScorer = BeamSearchScorer
+                print("✅ Добавлена заглушка для BeamSearchScorer")
+                
+    except Exception as e:
+        print(f"⚠️ Не удалось исправить совместимость: {e}")
+
+# Применяем исправление при импорте
+fix_transformers_compatibility()
+
 from TTS.api import TTS  # noqa
 
 os.makedirs("../output", exist_ok=True)
