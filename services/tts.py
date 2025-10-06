@@ -135,6 +135,20 @@ def generate_audio(
     except Exception as e:
         print(f"❌ Error initializing TTS: {e}")
         print(f"📋 Model name: {model_name}")
+        
+        # Специальная обработка для модели Bark
+        if 'bark' in model_name.lower():
+            print("🔧 Bark model failed, suggesting alternatives...")
+            alternative_models = [
+                'tts_models/multilingual/multi-dataset/xtts_v2',
+                'tts_models/multilingual/multi-dataset/xtts_v1.1',
+                'tts_models/multilingual/multi-dataset/your_tts'
+            ]
+            raise ValueError(
+                f"Модель Bark повреждена или не может быть загружена. "
+                f"Попробуйте альтернативные модели: {', '.join(alternative_models)}"
+            )
+        
         raise
     finally:
         if original_stdin:
