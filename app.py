@@ -963,9 +963,22 @@ async def get_speakers(model_name: str):
             speakers = []
             try:
                 if hasattr(tts, 'speakers') and tts.speakers:
-                    speakers = list(tts.speakers)
+                    if isinstance(tts.speakers, dict):
+                        speakers = list(tts.speakers.keys())
+                    else:
+                        speakers = list(tts.speakers)
+                elif 'xtts' in model_name.lower():
+                    # Для XTTS v2 пробуем получить реальных спикеров
+                    try:
+                        if hasattr(tts, 'speaker_manager') and hasattr(tts.speaker_manager, 'speakers'):
+                            speakers = list(tts.speaker_manager.speakers.keys())
+                        else:
+                            speakers = []
+                    except:
+                        speakers = []
             except:
-                pass
+                # Если ошибка, возвращаем пустой список
+                speakers = []
                 
             return {
                 'model_name': model_name,

@@ -124,15 +124,22 @@ def generate_audio(
 
     # Специальная обработка для XTTS v2
     if 'xtts' in model_name.lower():
-        # XTTS v2 требует speaker_wav для клонирования голоса
+        # XTTS v2 требует либо speaker_wav, либо speaker из доступных спикеров
         if not speaker_wav:
             # Если нет образца голоса, используем встроенные спикеры
             try:
                 speakers = tts.speakers
                 if speakers and len(speakers) > 0:
-                    tts_params['speaker'] = speakers[0]
-                    print(f"🎯 Using default XTTS speaker: {speakers[0]}")
-            except:  # noqa
+                    # Берем первого доступного спикера
+                    first_speaker = list(speakers.keys())[0] if isinstance(speakers, dict) else speakers[0]
+                    tts_params['speaker'] = first_speaker
+                    print(f"🎯 Using XTTS speaker: {first_speaker}")
+                else:
+                    # Если нет встроенных спикеров, не добавляем speaker параметр
+                    print(f"🎯 No built-in speakers found, using speaker_wav or language only")
+            except Exception as e:
+                # Если ошибка получения спикеров, не добавляем speaker параметр
+                print(f"🎯 Could not get speakers: {e}, using language only")
                 pass
     else:
         # Добавляем speaker если предоставлен (для моделей с множественными спикерами)
@@ -146,8 +153,14 @@ def generate_audio(
                 if speakers and len(speakers) > 0:
                     tts_params['speaker'] = speakers[0]  # Используем первого доступного спикера
                     print(f"🎯 Using default speaker: {speakers[0]}")
+                else:
+                    # Если нет встроенных спикеров, используем дефолтный
+                    tts_params['speaker'] = 'default'
+                    print(f"🎯 Using default speaker for multilingual model")
             except:  # noqa
-                pass
+                # В крайнем случае используем дефолтный спикер
+                tts_params['speaker'] = 'default'
+                print(f"🎯 Using fallback default speaker for multilingual model")
 
     try:
         print(f"🎵 Generating audio with parameters: {tts_params}")
