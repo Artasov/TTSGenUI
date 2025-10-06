@@ -69,7 +69,8 @@ AVAILABLE_MODELS = {
             'quality': 'high',
             'voice_cloning': True,
             'speakers': True,
-            'default_speakers': ['female', 'male']
+            'default_speakers': ['female', 'male'],
+            'supported_languages': ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'ja', 'hu', 'ko', 'hi']
         },
         {
             'id': 'tts_models/multilingual/multi-dataset/xtts_v1.1',
@@ -90,7 +91,8 @@ AVAILABLE_MODELS = {
             'gender': 'mixed',
             'quality': 'high',
             'voice_cloning': True,
-            'speakers': True
+            'speakers': True,
+            'supported_languages': ['en', 'fr-fr', 'pt-br']
         },
         {
             'id': 'tts_models/multilingual/multi-dataset/bark',
@@ -101,6 +103,20 @@ AVAILABLE_MODELS = {
             'quality': 'high',
             'voice_cloning': True,
             'speakers': True
+        }
+    ],
+    '🇷🇺 Русские модели': [
+        {
+            'id': 'tts_models/multilingual/multi-dataset/xtts_v2',
+            'name': 'XTTS v2 (Русский)',
+            'description': 'XTTS-v2.0.3 с поддержкой русского языка и клонированием голоса',
+            'language': 'ru',
+            'gender': 'mixed',
+            'quality': 'high',
+            'voice_cloning': True,
+            'speakers': True,
+            'default_speakers': ['female', 'male'],
+            'supported_languages': ['ru']
         }
     ],
     '🇺🇸 Английские модели': [

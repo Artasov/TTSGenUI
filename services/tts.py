@@ -50,6 +50,19 @@ def restore_stdin(original_stdin):
     sys.stdin = original_stdin
 
 
+def get_model_supported_languages(model_name: str):
+    """Получает список поддерживаемых языков для модели"""
+    # Словарь поддерживаемых языков для каждой модели
+    model_languages = {
+        'tts_models/multilingual/multi-dataset/xtts_v2': ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'ja', 'hu', 'ko', 'hi'],
+        'tts_models/multilingual/multi-dataset/xtts_v1.1': ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'ja', 'hu', 'ko', 'hi'],
+        'tts_models/multilingual/multi-dataset/your_tts': ['en', 'fr-fr', 'pt-br'],
+        'tts_models/multilingual/multi-dataset/bark': ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'ja', 'hu', 'ko', 'hi'],
+    }
+    
+    # Если модель не найдена в словаре, возвращаем None (неизвестно)
+    return model_languages.get(model_name, None)
+
 def generate_audio(
         text: str,
         model_name: str,
@@ -70,6 +83,27 @@ def generate_audio(
     @param speaker: Speaker name for multi-speaker models.
     @return: None
     """
+    # Проверяем поддержку языка для модели
+    if language:
+        supported_languages = get_model_supported_languages(model_name)
+        if supported_languages and language not in supported_languages:
+            # Предлагаем альтернативные модели для русского языка
+            if language == 'ru':
+                alternative_models = [
+                    'tts_models/multilingual/multi-dataset/xtts_v2',
+                    'tts_models/multilingual/multi-dataset/xtts_v1.1'
+                ]
+                raise ValueError(
+                    f"Модель {model_name} не поддерживает русский язык (ru). "
+                    f"Поддерживаемые языки: {supported_languages}. "
+                    f"Для русского языка используйте: {', '.join(alternative_models)}"
+                )
+            else:
+                raise ValueError(
+                    f"Модель {model_name} не поддерживает язык '{language}'. "
+                    f"Поддерживаемые языки: {supported_languages}"
+                )
+    
     # Автоматически принимаем лицензию для XTTS v2
     original_stdin = None
     if 'xtts' in model_name.lower():
