@@ -863,12 +863,62 @@ async def generate_tts(
         }
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Full error traceback: {error_details}")
         raise HTTPException(status_code=500, detail=f'Ошибка генерации: {str(e)}')
 
 @app.get('/models')
 async def get_models():
     """Получить список доступных моделей"""
     return {'models': AVAILABLE_MODELS}
+
+@app.get('/test/{model_name}')
+async def test_model(model_name: str):
+    """Тестовый endpoint для проверки работы модели"""
+    try:
+        from services.tts import generate_audio
+        import tempfile
+        import os
+        
+        # Создаем временный файл для теста
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+            temp_path = temp_file.name
+        
+        try:
+            # Тестируем с коротким текстом
+            generate_audio(
+                text="Hello, this is a test.",
+                model_name=model_name,
+                output_path=temp_path,
+                gpu=False,  # Используем CPU для теста
+                language="en" if 'multilingual' in model_name else None
+            )
+            
+            # Проверяем, что файл создан
+            if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+                return {
+                    'success': True,
+                    'message': f'Model {model_name} works correctly',
+                    'file_size': os.path.getsize(temp_path)
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': 'Model loaded but no audio generated'
+                }
+        finally:
+            # Удаляем временный файл
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+                
+    except Exception as e:
+        import traceback
+        return {
+            'success': False,
+            'message': f'Error testing model: {str(e)}',
+            'traceback': traceback.format_exc()
+        }
 
 @app.get('/speakers/{model_name}')
 async def get_speakers(model_name: str):

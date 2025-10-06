@@ -46,7 +46,10 @@ def generate_audio(
         original_stdin = auto_accept_license()
     
     try:
+        print(f"🔄 Loading TTS model: {model_name}")
         tts = TTS(model_name)
+        print(f"✅ Model loaded successfully")
+        
         # Используем новый API вместо устаревшего параметра gpu
         if gpu:
             try:
@@ -61,6 +64,14 @@ def generate_audio(
         else:
             tts.to('cpu')
             print('💻 Using CPU')
+            
+        # Проверяем доступные атрибуты модели
+        print(f"📋 Model attributes: speakers={hasattr(tts, 'speakers')}, language={hasattr(tts, 'language')}")
+        
+    except Exception as e:
+        print(f"❌ Error initializing TTS: {e}")
+        print(f"📋 Model name: {model_name}")
+        raise
     finally:
         if original_stdin:
             restore_stdin(original_stdin)
@@ -81,19 +92,38 @@ def generate_audio(
         tts_params['language'] = language
         print(f'🌍 Using language: {language}')
 
-    # Добавляем speaker если предоставлен (для моделей с множественными спикерами)
-    if speaker:
-        tts_params['speaker'] = speaker
-        print(f'🎤 Using speaker: {speaker}')
-    elif not speaker_wav and 'multilingual' in model_name:
-        # Для многоязычных моделей без speaker_wav используем default speaker
-        try:
-            speakers = tts.speakers
-            if speakers and len(speakers) > 0:
-                tts_params['speaker'] = speakers[0]  # Используем первого доступного спикера
-                print(f"🎯 Using default speaker: {speakers[0]}")
-        except:  # noqa
-            pass
+    # Специальная обработка для XTTS v2
+    if 'xtts' in model_name.lower():
+        # XTTS v2 требует speaker_wav для клонирования голоса
+        if not speaker_wav:
+            # Если нет образца голоса, используем встроенные спикеры
+            try:
+                speakers = tts.speakers
+                if speakers and len(speakers) > 0:
+                    tts_params['speaker'] = speakers[0]
+                    print(f"🎯 Using default XTTS speaker: {speakers[0]}")
+            except:  # noqa
+                pass
+    else:
+        # Добавляем speaker если предоставлен (для моделей с множественными спикерами)
+        if speaker:
+            tts_params['speaker'] = speaker
+            print(f'🎤 Using speaker: {speaker}')
+        elif not speaker_wav and 'multilingual' in model_name:
+            # Для многоязычных моделей без speaker_wav используем default speaker
+            try:
+                speakers = tts.speakers
+                if speakers and len(speakers) > 0:
+                    tts_params['speaker'] = speakers[0]  # Используем первого доступного спикера
+                    print(f"🎯 Using default speaker: {speakers[0]}")
+            except:  # noqa
+                pass
 
-    tts.tts_to_file(**tts_params)
-    print(f"✅ Audio saved: {output_path}")
+    try:
+        print(f"🎵 Generating audio with parameters: {tts_params}")
+        tts.tts_to_file(**tts_params)
+        print(f"✅ Audio saved: {output_path}")
+    except Exception as e:
+        print(f"❌ Error generating audio: {e}")
+        print(f"📋 Parameters used: {tts_params}")
+        raise
