@@ -1,176 +1,284 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TTS Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-2xl">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">TTS Generator</h1>
-            <p class="text-gray-600">Генерация речи из текста с помощью Coqui TTS</p>
+<body class="bg-gray-50 dark:bg-dark-900 min-h-screen transition-colors duration-300">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <!-- Header with Theme Toggle -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">TTS Generator</h1>
+                <p class="text-gray-600 dark:text-gray-400">Генерация речи из текста с помощью Coqui TTS</p>
+            </div>
+            <button id="themeToggle" class="p-2 rounded-lg bg-gray-200 dark:bg-dark-700 hover:bg-gray-300 dark:hover:bg-dark-600 transition-colors">
+                <svg id="sunIcon" class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                </svg>
+                <svg id="moonIcon" class="w-6 h-6 text-blue-400 hidden" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                </svg>
+            </button>
         </div>
 
         <!-- Form -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-white dark:bg-dark-800 rounded-lg shadow-lg p-6">
             <form id="ttsForm" class="space-y-6">
                 <!-- Text Input -->
                 <div>
-                    <label for="text" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="text" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Текст для генерации
                     </label>
                     <textarea 
                         id="text" 
                         name="text" 
                         rows="4" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-700 text-gray-900 dark:text-white"
                         placeholder="Введите текст для генерации речи..."
                         required
                     ></textarea>
                 </div>
 
-                <!-- Model Selection -->
+                <!-- Model Selection with Dropdown -->
                 <div>
-                    <label for="model_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="model_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Модель TTS
                     </label>
                     
-                    <!-- Фильтры -->
-                    <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Язык</label>
-                                <select id="languageFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">Все языки</option>
-                                    <option value="en">🇺🇸 Английский</option>
-                                    <option value="ru">🇷🇺 Русский</option>
-                                    <option value="multilingual">🌍 Многоязычные</option>
-                                </select>
+                    <!-- Selected Model Display -->
+                    <div id="selectedModelCard" class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900 dark:text-white" id="selectedModelName">Выберите модель</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400" id="selectedModelDescription">Модель не выбрана</p>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Пол</label>
-                                <select id="genderFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">Любой пол</option>
-                                    <option value="male">👨 Мужской</option>
-                                    <option value="female">👩 Женский</option>
-                                    <option value="mixed">👥 Смешанный</option>
-                                </select>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="previewSelectedBtn" class="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors opacity-0" disabled>
+                                    🎵 Превью
+                                </button>
+                                <button type="button" id="hideSelectedBtn" class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors opacity-0" disabled>
+                                    ✕
+                                </button>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Качество</label>
-                                <select id="qualityFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">Любое качество</option>
-                                    <option value="high">⭐ Высокое</option>
-                                    <option value="medium">⚡ Среднее</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <input 
-                                type="text" 
-                                id="searchFilter" 
-                                placeholder="Поиск по названию или описанию..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                        </div>
-                        <div class="mt-2 flex justify-between">
-                            <button type="button" id="clearFilters" class="text-sm text-blue-600 hover:text-blue-800">
-                                Очистить фильтры
-                            </button>
-                            <span id="filteredCount" class="text-sm text-gray-500"></span>
                         </div>
                     </div>
                     
-                    <div class="space-y-4" id="modelsContainer">
-                        {% for category, category_models in models.items() %}
-                        <div class="border border-gray-200 rounded-lg p-4" data-category="{{ category }}">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ category }}</h3>
-                            <div class="grid gap-3">
-                                {% for model in category_models %}
-                                <label class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" 
-                                       data-model='{{ model | tojson }}'>
-                                    <input 
-                                        type="radio" 
-                                        name="model_name" 
-                                        value="{{ model.id }}" 
-                                        class="mt-1 text-blue-600 focus:ring-blue-500"
-                                        {% if loop.first %}checked{% endif %}
-                                    >
-                                    <div class="flex-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="font-medium text-gray-900">{{ model.name }}</span>
-                                            <div class="flex items-center space-x-2">
-                                                {% if model.gender == 'male' %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    👨 Мужской
-                                                </span>
-                                                {% elif model.gender == 'female' %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
-                                                    👩 Женский
-                                                </span>
-                                                {% else %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                    👥 Смешанный
-                                                </span>
-                                                {% endif %}
-                                                
-                                                {% if model.quality == 'high' %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    ⭐ Высокое
-                                                </span>
-                                                {% elif model.quality == 'medium' %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                    ⚡ Среднее
-                                                </span>
-                                                {% endif %}
-                                                
-                                                {% if model.language == 'en' %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                    🇺🇸 EN
-                                                </span>
-                                                {% elif model.language == 'ru' %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    🇷🇺 RU
-                                                </span>
-                                                {% else %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                                    🌍 Multi
-                                                </span>
-                                                {% endif %}
+                    <!-- Compact Search and Filters -->
+                    <div class="mb-4 p-3 bg-gray-50 dark:bg-dark-700 rounded-lg">
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <input 
+                                type="text" 
+                                id="searchFilter" 
+                                placeholder="🔍 Поиск моделей..."
+                                class="flex-1 min-w-64 px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-600 text-gray-900 dark:text-white"
+                            >
+                            <select id="languageFilter" class="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-600 text-gray-900 dark:text-white">
+                                <option value="">🌍 Все языки</option>
+                                <option value="en">🇺🇸 EN</option>
+                                <option value="ru">🇷🇺 RU</option>
+                                <option value="de">🇩🇪 DE</option>
+                                <option value="fr">🇫🇷 FR</option>
+                                <option value="es">🇪🇸 ES</option>
+                                <option value="it">🇮🇹 IT</option>
+                                <option value="nl">🇳🇱 NL</option>
+                                <option value="pl">🇵🇱 PL</option>
+                                <option value="tr">🇹🇷 TR</option>
+                                <option value="zh">🇨🇳 ZH</option>
+                                <option value="ja">🇯🇵 JA</option>
+                                <option value="ko">🇰🇷 KO</option>
+                                <option value="multilingual">🌍 Multi</option>
+                            </select>
+                            <select id="genderFilter" class="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-600 text-gray-900 dark:text-white">
+                                <option value="">👥 Любой пол</option>
+                                <option value="male">👨 Мужской</option>
+                                <option value="female">👩 Женский</option>
+                                <option value="mixed">👥 Смешанный</option>
+                            </select>
+                            <select id="qualityFilter" class="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-dark-600 text-gray-900 dark:text-white">
+                                <option value="">⭐ Любое качество</option>
+                                <option value="high">⭐ Высокое</option>
+                                <option value="medium">⚡ Среднее</option>
+                            </select>
+                            <button type="button" id="clearFilters" class="px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                                🗑️ Очистить
+                            </button>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span id="filteredCount" class="text-sm text-gray-500 dark:text-gray-400"></span>
+                            <button type="button" id="toggleModels" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                                <span id="toggleText">Показать все модели</span>
+                                <svg id="toggleIcon" class="w-4 h-4 inline ml-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Model Selection Dropdown -->
+                    <div id="modelDropdown" class="hidden">
+                        <div class="max-h-96 overflow-y-auto border border-gray-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700" id="modelsContainer">
+                            {% for category, category_models in models.items() %}
+                            <div class="border-b border-gray-200 dark:border-dark-600 p-3" data-category="{{ category }}">
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">{{ category }}</h3>
+                                <div class="space-y-1">
+                                    {% for model in category_models %}
+                                    <label class="flex items-center space-x-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 cursor-pointer transition-all duration-200 group border border-transparent hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md" 
+                                           data-model='{{ model | tojson }}'>
+                                        <div class="relative">
+                                            <input 
+                                                type="radio" 
+                                                name="model_name" 
+                                                value="{{ model.id }}" 
+                                                class="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
+                                                {% if loop.first %}checked{% endif %}
+                                            >
+                                            <div class="absolute -inset-1 rounded-full bg-blue-500 opacity-0 scale-0 transition-all duration-200 group-has-[input:checked]:opacity-20 group-has-[input:checked]:scale-100"></div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-semibold text-gray-900 dark:text-white text-sm truncate group-has-[input:checked]:text-blue-700 dark:group-has-[input:checked]:text-blue-300">{{ model.name }}</span>
+                                                <div class="flex items-center space-x-1 ml-2">
+                                                    {% if model.gender == 'male' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                                        👨
+                                                    </span>
+                                                    {% elif model.gender == 'female' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200">
+                                                        👩
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                                        👥
+                                                    </span>
+                                                    {% endif %}
+                                                    
+                                                    {% if model.quality == 'high' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                        ⭐
+                                                    </span>
+                                                    {% elif model.quality == 'medium' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                                                        ⚡
+                                                    </span>
+                                                    {% endif %}
+                                                    
+                                                    {% if model.language == 'en' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                        🇺🇸
+                                                    </span>
+                                                    {% elif model.language == 'ru' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                                        🇷🇺
+                                                    </span>
+                                                    {% elif model.language == 'de' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                                                        🇩🇪
+                                                    </span>
+                                                    {% elif model.language == 'fr' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                                        🇫🇷
+                                                    </span>
+                                                    {% elif model.language == 'es' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                        🇪🇸
+                                                    </span>
+                                                    {% elif model.language == 'it' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                        🇮🇹
+                                                    </span>
+                                                    {% elif model.language == 'nl' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
+                                                        🇳🇱
+                                                    </span>
+                                                    {% elif model.language == 'pl' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                        🇵🇱
+                                                    </span>
+                                                    {% elif model.language == 'tr' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                        🇹🇷
+                                                    </span>
+                                                    {% elif model.language == 'zh' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                        🇨🇳
+                                                    </span>
+                                                    {% elif model.language == 'ja' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                        🇯🇵
+                                                    </span>
+                                                    {% elif model.language == 'ko' %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                                        🇰🇷
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                                                        🌍
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400 truncate">{{ model.description }}</p>
+                                            <div class="mt-2 flex items-center space-x-2">
+                                                <button type="button" 
+                                                        class="preview-btn inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-105"
+                                                        data-model-id="{{ model.id }}"
+                                                        data-model-name="{{ model.name }}"
+                                                        data-model-language="{{ model.language }}">
+                                                    🎵 Превью
+                                                </button>
+                                                <span class="preview-status text-xs text-gray-500 dark:text-gray-400 hidden"></span>
                                             </div>
                                         </div>
-                                        <p class="text-sm text-gray-600 mt-1">{{ model.description }}</p>
-                                        <div class="mt-2 flex items-center space-x-2">
-                                            <button type="button" 
-                                                    class="preview-btn inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    data-model-id="{{ model.id }}"
-                                                    data-model-name="{{ model.name }}">
-                                                🎵 Предпрослушать
-                                            </button>
-                                            <span class="preview-status text-xs text-gray-500 hidden"></span>
-                                        </div>
-                                    </div>
-                                </label>
-                                {% endfor %}
+                                    </label>
+                                    {% endfor %}
+                                </div>
                             </div>
-                        </div>
-                        {% endfor %}
+                            {% endfor %}
+                    </div>
+                </div>
+
                     </div>
                 </div>
 
                 <!-- Output Filename -->
                 <div>
-                    <label for="output_filename" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="output_filename" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Имя файла (без расширения)
                     </label>
                     <input 
                         type="text" 
                         id="output_filename" 
                         name="output_filename" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-700 text-gray-900 dark:text-white"
                         placeholder="my_audio"
                         value="generated_audio"
                         required
@@ -178,13 +286,13 @@
                 </div>
 
                 <!-- Submit Button -->
-                <div>
+                <div class="mt-6">
                     <button 
                         type="submit" 
                         id="generateBtn"
-                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        class="w-full bg-blue-600 dark:bg-blue-700 text-white py-3 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
                     >
-                        <span id="btnText">Сгенерировать аудио</span>
+                        <span id="btnText">🎵 Сгенерировать аудио</span>
                         <span id="loadingSpinner" class="hidden">
                             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -198,7 +306,7 @@
 
             <!-- Result Message -->
             <div id="resultMessage" class="mt-4 hidden">
-                <div id="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded hidden">
+                <div id="successMessage" class="bg-green-100 dark:bg-green-900 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300 px-4 py-3 rounded hidden">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
@@ -206,7 +314,7 @@
                         <span id="successText"></span>
                     </div>
                 </div>
-                <div id="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded hidden">
+                <div id="errorMessage" class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded hidden">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
@@ -218,13 +326,67 @@
         </div>
 
         <!-- Info -->
-        <div class="mt-6 text-center text-sm text-gray-500">
-            <p>Файлы сохраняются в папку <code class="bg-gray-100 px-2 py-1 rounded">output/</code></p>
+        <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <p>Файлы сохраняются в папку <code class="bg-gray-100 dark:bg-dark-700 px-2 py-1 rounded text-gray-800 dark:text-gray-200">output/</code></p>
             <p>Если файл с таким именем уже существует, будет добавлен уникальный суффикс</p>
         </div>
     </div>
 
     <script>
+        // Темная тема
+        function initTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+            const html = document.documentElement;
+            
+            // Проверяем сохраненную тему
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+                html.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                html.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+            
+            themeToggle.addEventListener('click', function() {
+                if (html.classList.contains('dark')) {
+                    html.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                } else {
+                    html.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                }
+            });
+        }
+        
+        // Выпадающее меню моделей
+        function initModelDropdown() {
+            const toggleButton = document.getElementById('toggleModels');
+            const toggleText = document.getElementById('toggleText');
+            const toggleIcon = document.getElementById('toggleIcon');
+            const modelDropdown = document.getElementById('modelDropdown');
+            
+            toggleButton.addEventListener('click', function() {
+                if (modelDropdown.classList.contains('hidden')) {
+                    modelDropdown.classList.remove('hidden');
+                    toggleText.textContent = 'Скрыть модели';
+                    toggleIcon.style.transform = 'rotate(180deg)';
+                } else {
+                    modelDropdown.classList.add('hidden');
+                    toggleText.textContent = 'Показать все модели';
+                    toggleIcon.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+        
         // Фильтрация моделей
         function filterModels() {
             const languageFilter = document.getElementById('languageFilter').value;
@@ -263,7 +425,7 @@
                 }
                 
                 if (show) {
-                    card.style.display = 'block';
+                    card.style.display = 'flex';
                     visibleCount++;
                 } else {
                     card.style.display = 'none';
@@ -301,15 +463,59 @@
         document.getElementById('searchFilter').addEventListener('input', filterModels);
         
         // Предпрослушивание моделей
-        function previewModel(modelId, modelName) {
-            const previewText = 'Привет! Это предпрослушивание модели.';
+        function previewModel(modelId, modelName, modelLanguage) {
+            // Выбираем текст для превью в зависимости от языка модели
+            let previewText = 'Привет! Это предпрослушивание модели.';
+            
+            switch(modelLanguage) {
+                case 'en':
+                    previewText = 'Hello! This is a model preview.';
+                    break;
+                case 'ru':
+                    previewText = 'Привет! Это предпрослушивание модели.';
+                    break;
+                case 'de':
+                    previewText = 'Hallo! Das ist eine Modellvorschau.';
+                    break;
+                case 'fr':
+                    previewText = 'Bonjour! Ceci est un aperçu du modèle.';
+                    break;
+                case 'es':
+                    previewText = '¡Hola! Esta es una vista previa del modelo.';
+                    break;
+                case 'it':
+                    previewText = 'Ciao! Questa è un\'anteprima del modello.';
+                    break;
+                case 'nl':
+                    previewText = 'Hallo! Dit is een modelvoorbeeld.';
+                    break;
+                case 'pl':
+                    previewText = 'Cześć! To jest podgląd modelu.';
+                    break;
+                case 'tr':
+                    previewText = 'Merhaba! Bu bir model önizlemesi.';
+                    break;
+                case 'zh':
+                    previewText = '你好！这是模型预览。';
+                    break;
+                case 'ja':
+                    previewText = 'こんにちは！これはモデルプレビューです。';
+                    break;
+                case 'ko':
+                    previewText = '안녕하세요! 이것은 모델 미리보기입니다.';
+                    break;
+                case 'multilingual':
+                    previewText = 'Hello! Привет! Hola! Bonjour! 你好! こんにちは!';
+                    break;
+            }
+            
             const button = document.querySelector(`[data-model-id="${modelId}"]`);
             const status = button.nextElementSibling;
             
             // Показываем статус загрузки
             button.disabled = true;
-            button.innerHTML = '⏳ Генерация...';
-            status.textContent = 'Генерируется предпрослушивание...';
+            button.innerHTML = '⏳';
+            status.textContent = 'Генерируется...';
             status.classList.remove('hidden');
             
             // Создаем FormData для предпрослушивания
@@ -329,13 +535,13 @@
                     const audio = new Audio(`/output/${data.filename}`);
                     audio.play();
                     
-                    status.textContent = '✅ Предпрослушивание готово';
+                    status.textContent = '✅ Готово';
                     status.classList.remove('hidden');
                     
                     // Восстанавливаем кнопку через 3 секунды
                     setTimeout(() => {
                         button.disabled = false;
-                        button.innerHTML = '🎵 Предпрослушать';
+                        button.innerHTML = '🎵';
                         status.classList.add('hidden');
                     }, 3000);
                 } else {
@@ -343,10 +549,10 @@
                 }
             })
             .catch(error => {
-                status.textContent = '❌ Ошибка: ' + error.message;
+                status.textContent = '❌ Ошибка';
                 status.classList.remove('hidden');
                 button.disabled = false;
-                button.innerHTML = '🎵 Предпрослушать';
+                button.innerHTML = '🎵';
                 
                 setTimeout(() => {
                     status.classList.add('hidden');
@@ -354,18 +560,77 @@
             });
         }
         
+        // Обновление выбранной модели
+        function updateSelectedModel() {
+            const selectedRadio = document.querySelector('input[name="model_name"]:checked');
+            const selectedModelCard = document.getElementById('selectedModelCard');
+            const selectedModelName = document.getElementById('selectedModelName');
+            const selectedModelDescription = document.getElementById('selectedModelDescription');
+            const previewSelectedBtn = document.getElementById('previewSelectedBtn');
+            const hideSelectedBtn = document.getElementById('hideSelectedBtn');
+            
+            if (selectedRadio) {
+                const modelData = JSON.parse(selectedRadio.closest('label').dataset.model);
+                selectedModelName.textContent = modelData.name;
+                selectedModelDescription.textContent = modelData.description;
+                previewSelectedBtn.dataset.modelId = modelData.id;
+                previewSelectedBtn.dataset.modelName = modelData.name;
+                previewSelectedBtn.dataset.modelLanguage = modelData.language;
+                previewSelectedBtn.disabled = false;
+                hideSelectedBtn.disabled = false;
+                previewSelectedBtn.classList.remove('opacity-0');
+                hideSelectedBtn.classList.remove('opacity-0');
+                selectedModelCard.classList.add('opacity-100');
+            } else {
+                selectedModelName.textContent = 'Выберите модель';
+                selectedModelDescription.textContent = 'Модель не выбрана';
+                previewSelectedBtn.disabled = true;
+                hideSelectedBtn.disabled = true;
+                previewSelectedBtn.classList.add('opacity-0');
+                hideSelectedBtn.classList.add('opacity-0');
+            }
+        }
+        
+        // Скрытие выбранной модели
+        function hideSelectedModel() {
+            const selectedModelCard = document.getElementById('selectedModelCard');
+            selectedModelCard.style.display = 'none';
+        }
+        
         // Привязка событий к кнопкам предпрослушивания
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('preview-btn')) {
                 const modelId = e.target.dataset.modelId;
                 const modelName = e.target.dataset.modelName;
-                previewModel(modelId, modelName);
+                const modelLanguage = e.target.dataset.modelLanguage;
+                previewModel(modelId, modelName, modelLanguage);
+            }
+            
+            if (e.target.id === 'previewSelectedBtn') {
+                const modelId = e.target.dataset.modelId;
+                const modelName = e.target.dataset.modelName;
+                const modelLanguage = e.target.dataset.modelLanguage;
+                previewModel(modelId, modelName, modelLanguage);
+            }
+            
+            if (e.target.id === 'hideSelectedBtn') {
+                hideSelectedModel();
             }
         });
         
-        // Инициализация фильтров
+        // Отслеживание изменений выбранной модели
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'model_name') {
+                updateSelectedModel();
+            }
+        });
+        
+        // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            initModelDropdown();
             filterModels();
+            updateSelectedModel();
         });
 
         document.getElementById('ttsForm').addEventListener('submit', async function(e) {
